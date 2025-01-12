@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DhanSaathi AI</title>
+    <link rel="stylesheet" href="static\css\styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DhanSaathi AI</h1>
+            <p>Ask me anything about finance and government schemes</p>
+        </header>
+        
+        <div class="chat-container">
+            <div id="chat-messages" class="chat-messages"></div>
+            
+            <div class="input-container">
+                <input type="text" id="query-input" placeholder="Type your question here..." autocomplete="off">
+                <button onclick="sendMessage()" id="send-button">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('query-input');
+            const query = input.value.trim();
+            
+            if (!query) return;
+
+            // Disable input and button while processing
+            input.disabled = true;
+            document.getElementById('send-button').disabled = true;
+
+            // Add user message to chat
+            addMessage('user', query);
+            input.value = '';
+
+            // Send request to backend
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    addMessage('error', data.error);
+                } else {
+                    addMessage('assistant', data.answer);
+                }
+            })
+            .catch(error => {
+                addMessage('error', 'Sorry, something went wrong. Please try again.');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Re-enable input and button
+                input.disabled = false;
+                document.getElementById('send-button').disabled = false;
+                input.focus();
+            });
+        }
+
+        function addMessage(type, content) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.textContent = content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Allow Enter key to send message
+        document.getElementById('query-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
